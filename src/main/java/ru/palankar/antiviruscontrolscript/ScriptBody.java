@@ -2,6 +2,11 @@ package ru.palankar.antiviruscontrolscript;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import ru.palankar.antiviruscontrolscript.Model.Directories;
+import ru.palankar.antiviruscontrolscript.Repository.JSONList;
+import ru.palankar.antiviruscontrolscript.Repository.JSONtoUserFileMap;
+import ru.palankar.antiviruscontrolscript.Repository.UserFilesList;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -15,23 +20,23 @@ import java.util.stream.Collectors;
 public class ScriptBody {
     Logger logger = LogManager.getLogger(ScriptBody.class);
     private static final String PATH_TO_DIR_PROPERTIES = "src/main/resources/directories.properties";
-
-    private Path firstDirectory;
-    private Path secondDirectory;
-    private Path thirdDirectory;
-    private List<File> JSONList = new ArrayList<>();
-    private Map<String, File> userFilesWithJsons = new HashMap<>();
-    private List<File> userFiles = new ArrayList<>();   //к которым нашли json
-
+    private Directories directories;
+    private JSONList jsonList;
+    private UserFilesList userFilesList;
+    private JSONtoUserFileMap jsoNtoUserFileMap;
 
     public ScriptBody() {
         try {
             Properties properties = new Properties();
             properties.load(new FileInputStream(PATH_TO_DIR_PROPERTIES));
 
-            this.firstDirectory = Paths.get(properties.getProperty("FirstDirectory"));
-            this.secondDirectory = Paths.get(properties.getProperty("SecondDirectory"));
-            this.thirdDirectory = Paths.get(properties.getProperty("ThirdDirectory"));
+            directories = new Directories();
+            directories.setFirstDirectory(Paths.get(properties.getProperty("FirstDirectory")));
+            directories.setSecondDirectory(Paths.get(properties.getProperty("SecondDirectory")));
+            directories.setThirdDirectory(Paths.get(properties.getProperty("ThirdDirectory")));
+            jsonList = JSONList.getInstance();
+            userFilesList = UserFilesList.getInstance();
+            jsoNtoUserFileMap = JSONtoUserFileMap.getInstance();
         } catch (IOException e) {
             logger.info("Не вышло обратиться к конфигурации");
         }
@@ -39,35 +44,28 @@ public class ScriptBody {
         startScript();
     }
 
-    public List getJSONList() {
-        return JSONList;
-    }
-
-    public void setJSONList(List JSONList) {
-        this.JSONList = JSONList;
-    }
-
-    public Path getFirstDirectory() {
-        return firstDirectory;
-    }
-
-    public Path getSecondDirectory() {
-        return secondDirectory;
-    }
-
-    public Path getThirdDirectory() {
-        return thirdDirectory;
+    public void startScript() {
+        fillingArray();
+        if (jsoNtoUserFileMap.getMap().size() > 0) {
+            movingFiles(userFilesList.getList(), directories.getFirstDirectory(), directories.getSecondDirectory());
+            for (File file : userFilesList.getList()) {
+                replaceFiles(userFilesList.getList(), file,
+                        renameFile(file, file.getPath().substring(0, file.getPath().indexOf(".part"))));
+            }
+        } else {
+            logger.info("Пар файл/json не было обнаружено в директории " + directories.getFirstDirectory());
+        }
     }
 
     private void fillingArray() {
-        File[] files = getFirstDirectory().toFile().listFiles();
+        File[] files = directories.getFirstDirectory().toFile().listFiles();
 
         if (files.length == 0) {
             logger.info("Файлы отсутствуют в указанной директории");
         } else {
             List<File> jsons = filterArray(files);
             findingPairs(jsons);
-            JSONList.addAll(jsons);
+            jsonList.getList().addAll(jsons);
         }
     }
 
@@ -88,7 +86,7 @@ public class ScriptBody {
 
     private void findingPairs(List<File> jsons) {
         try {
-            List<Path> files = Files.walk(Paths.get(firstDirectory.toString()))
+            List<Path> files = Files.walk(Paths.get(directories.getFirstDirectory().toString()))
                     .filter(Files::isRegularFile)
                     .filter(path -> !path.toFile().getName().endsWith(".json"))
                     .collect(Collectors.toCollection(ArrayList::new));
@@ -98,26 +96,13 @@ public class ScriptBody {
                     if (file.toFile().getName().contains(
                             json.getName()
                                     .substring(0, json.getName().indexOf(".json")))) {
-                        userFilesWithJsons.put(json.getName(), file.toFile());
-                        userFiles.add(file.toFile());
+                        jsoNtoUserFileMap.getMap().put(json.getName(), file.toFile());
+                        userFilesList.getList().add(file.toFile());
                     }
                 }
             }
         } catch (IOException e) {
             logger.info("Проблема при нахождении пар файл/json");
-        }
-    }
-
-    public void startScript() {
-        fillingArray();
-        if (userFilesWithJsons.size() > 0) {
-            movingFiles(userFiles, firstDirectory, secondDirectory);
-            for (File file : userFiles) {
-                replaceFiles(userFiles, file,
-                        renameFile(file, file.getPath().substring(0, file.getPath().indexOf(".part"))));
-            }
-        } else {
-            logger.info("Пар файл/json не было обнаружено в директории " + firstDirectory);
         }
     }
 
@@ -170,9 +155,9 @@ public class ScriptBody {
     }
 
     public void replaceFiles(List<File> oldUserList, File oldFile, File renamed) {
-        for (String key : userFilesWithJsons.keySet()) {
+        for (String key : jsoNtoUserFileMap.getMap().keySet()) {
             if (key.contains(oldFile.getName().substring(0, oldFile.getName().indexOf('.'))))
-                userFilesWithJsons.replace(key, renamed);
+                jsoNtoUserFileMap.getMap().replace(key, renamed);
         }
         Collections.replaceAll(oldUserList, oldFile, renamed);
     }

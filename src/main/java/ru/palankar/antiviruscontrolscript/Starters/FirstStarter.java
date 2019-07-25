@@ -11,9 +11,13 @@ public class FirstStarter {
         logger.info("Starting script initializing");
         ScriptBody scriptBody = new ScriptBody();
 
-        // TODO: 24.07.2019 Логгировать надо иначе, по условиям
-        logger.info("Files in first directory: ");
-        scriptBody.getJSONList().stream().forEach(System.out::println);
+        StringBuilder userFiles = new StringBuilder();
+        if (userFiles.length() > 0) {
+            userFiles.append(scriptBody.getUserFilesWithJsons().values());
+            logger.info("Files in first directory: " + userFiles);
+        } else {
+            logger.info("There are no files in first directory");
+        }
     }
 
 }
