@@ -6,6 +6,8 @@ import ru.palankar.antiviruscontrolscript.Model.Directories;
 import ru.palankar.antiviruscontrolscript.Repository.JSONList;
 import ru.palankar.antiviruscontrolscript.Repository.JSONtoUserFileMap;
 import ru.palankar.antiviruscontrolscript.Repository.UserFilesList;
+import ru.palankar.antiviruscontrolscript.Service.DirectoryService;
+import ru.palankar.antiviruscontrolscript.Service.DirectoryServiceImpl;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,28 +20,19 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ScriptBody {
-    Logger logger = LogManager.getLogger(ScriptBody.class);
-    private static final String PATH_TO_DIR_PROPERTIES = "src/main/resources/directories.properties";
     private Directories directories;
+    private Logger logger = LogManager.getLogger(ScriptBody.class);
     private JSONList jsonList;
     private UserFilesList userFilesList;
     private JSONtoUserFileMap jsoNtoUserFileMap;
 
     public ScriptBody() {
-        try {
-            Properties properties = new Properties();
-            properties.load(new FileInputStream(PATH_TO_DIR_PROPERTIES));
-
-            directories = new Directories();
-            directories.setFirstDirectory(Paths.get(properties.getProperty("FirstDirectory")));
-            directories.setSecondDirectory(Paths.get(properties.getProperty("SecondDirectory")));
-            directories.setThirdDirectory(Paths.get(properties.getProperty("ThirdDirectory")));
-            jsonList = JSONList.getInstance();
-            userFilesList = UserFilesList.getInstance();
-            jsoNtoUserFileMap = JSONtoUserFileMap.getInstance();
-        } catch (IOException e) {
-            logger.info("Не вышло обратиться к конфигурации");
-        }
+        directories = new Directories();
+        DirectoryService directoryService = new DirectoryServiceImpl();
+        directoryService.init();
+        jsonList = JSONList.getInstance();
+        userFilesList = UserFilesList.getInstance();
+        jsoNtoUserFileMap = JSONtoUserFileMap.getInstance();
 
         startScript();
     }
