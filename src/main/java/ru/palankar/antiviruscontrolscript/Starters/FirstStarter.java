@@ -13,6 +13,8 @@ public class FirstStarter {
         logger.info("Starting script initializing");
         ScriptBody scriptBody = new ScriptBody();
 
+        scriptBody.startScript();
+
         StringBuilder userFiles = new StringBuilder();
         if (userFiles.length() > 0) {
             userFiles.append(jsonNtoUserFileMap.getMap().values());

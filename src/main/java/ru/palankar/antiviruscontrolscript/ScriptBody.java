@@ -24,7 +24,7 @@ public class ScriptBody {
     private Logger logger = LogManager.getLogger(ScriptBody.class);
     private JSONList jsonList;
     private UserFilesList userFilesList;
-    private JSONtoUserFileMap jsoNtoUserFileMap;
+    private JSONtoUserFileMap jsonToUserFileMap;
 
     public ScriptBody() {
         directories = Directories.getInstance();
@@ -32,22 +32,21 @@ public class ScriptBody {
         directoryService.init();
         jsonList = JSONList.getInstance();
         userFilesList = UserFilesList.getInstance();
-        jsoNtoUserFileMap = JSONtoUserFileMap.getInstance();
-
-        startScript();
+        jsonToUserFileMap = JSONtoUserFileMap.getInstance();
     }
 
     public void startScript() {
         fillingArray();
-        if (jsoNtoUserFileMap.getMap().size() > 0) {
+
+        if (jsonToUserFileMap.getMap().size() > 0) {
             movingFiles(userFilesList.getList(), directories.getFirstDirectory(), directories.getSecondDirectory());
-            for (File file : userFilesList.getList()) {
-                replaceFiles(userFilesList.getList(), file,
-                        renameFile(file, file.getPath().substring(0, file.getPath().indexOf(".part"))));
-            }
         } else {
             logger.info("Пар файл/json не было обнаружено в директории " + directories.getFirstDirectory());
         }
+        checkByAntivirus(jsonToUserFileMap.getMap());
+
+        movingFiles(userFilesList.getList(), directories.getSecondDirectory(), directories.getThirdDirectory());
+
     }
 
     private void fillingArray() {
@@ -89,7 +88,7 @@ public class ScriptBody {
                     if (file.toFile().getName().contains(
                             json.getName()
                                     .substring(0, json.getName().indexOf(".json")))) {
-                        jsoNtoUserFileMap.getMap().put(json.getName(), file.toFile());
+                        jsonToUserFileMap.getMap().put(json.getName(), file.toFile());
                         userFilesList.getList().add(file.toFile());
                     }
                 }
@@ -99,6 +98,13 @@ public class ScriptBody {
         }
     }
 
+    // TODO: 25.07.2019 Очень сомнительный кусок, особенно в плане переименований. На рефакторинг 
+    /**
+     * Перемещение файла, внутри которого происходит переименование
+     * @param files ничто иное, как файлы userFilesList
+     * @param from начальная директория, где лежит файл
+     * @param into конечная директория, где файл окажется
+     */
     private void movingFiles(List<File> files, Path from, Path into) {
 
         logger.info("Начало перемещения файлов из каталога: " + from.toString());
@@ -113,15 +119,21 @@ public class ScriptBody {
             filename = file.getName() + ".part";
             filepath = file.getPath() + ".part";
 
-            savingFile(renamed, into);
+            File displaced = savingFile(renamed, into);
+
+            String key = file.getName().split("[.]")[0]+".json";
+
+            jsonToUserFileMap.getMap().replace(key, displaced);
+            Collections.replaceAll(files, renamed, displaced);
 
             if (renamed.delete())
                 logger.info("Файл " + filename + " удален из " + filepath);
         }
+
         logger.info("Файлы перемещены в каталог: " + into.toString());
     }
 
-    private void savingFile(File file, Path into) {
+    private File savingFile(File file, Path into) {
         File newFile = new File(into.toString() + "\\" +
                 file.getName().substring(0, file.getName().indexOf(".part")));
 
@@ -138,6 +150,8 @@ public class ScriptBody {
         } catch (IOException e) {
             logger.info(e.getMessage());
         }
+
+        return newFile;
     }
 
     public File renameFile(File file, String newName) {
@@ -148,10 +162,25 @@ public class ScriptBody {
     }
 
     public void replaceFiles(List<File> oldUserList, File oldFile, File renamed) {
-        for (String key : jsoNtoUserFileMap.getMap().keySet()) {
+        for (String key : jsonToUserFileMap.getMap().keySet()) {
             if (key.contains(oldFile.getName().substring(0, oldFile.getName().indexOf('.'))))
-                jsoNtoUserFileMap.getMap().replace(key, renamed);
+                jsonToUserFileMap.getMap().replace(key, renamed);
         }
         Collections.replaceAll(oldUserList, oldFile, renamed);
+    }
+
+    public void checkByAntivirus(Map<String, File> files) {
+        logger.info("Уиии, проверка антивирусом! :3");
+
+        boolean isVirus = false;
+        for (File file : files.values()) {
+            logger.info("Проверка файла " + file);
+        }
+
+        // TODO: 25.07.2019 использовать warn в опасных случаях, вроде такого, дополнить конфиг log4j, после рефакторинга завершать программу или продолжать в зависимости от проверки (свериться с алгоритмом)
+        if(isVirus)
+            logger.info("Обнаружен вирусняга!");
+        else
+            logger.info("Проверка завершена");
     }
 }
