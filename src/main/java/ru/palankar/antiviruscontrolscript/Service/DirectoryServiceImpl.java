@@ -13,13 +13,13 @@ public class DirectoryServiceImpl implements DirectoryService {
     @Override
     public void init() {
         try {
-            Properties properties = new Properties();
-            properties.load(new FileInputStream(PATH_TO_DIR_PROPERTIES));
+            Properties prop = new Properties();
+            prop.load(new FileInputStream(PATH_TO_DIR_PROPERTIES));
 
-            Directories directories = new Directories();
-            directories.setFirstDirectory(Paths.get(properties.getProperty("FirstDirectory")));
-            directories.setSecondDirectory(Paths.get(properties.getProperty("SecondDirectory")));
-            directories.setThirdDirectory(Paths.get(properties.getProperty("ThirdDirectory"))); 
+            Directories directories = Directories.getInstance();
+            directories.setFirstDirectory(prop.getProperty("FirstDirectory"));
+            directories.setSecondDirectory(prop.getProperty("SecondDirectory"));
+            directories.setThirdDirectory(prop.getProperty("ThirdDirectory"));
         } catch (IOException e) {
             // TODO: 25.07.2019 Logger warn о ненахождении файла 
         }

@@ -1,37 +1,48 @@
 package ru.palankar.antiviruscontrolscript.Model;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Директории, по которым перемещаются файлы.
  * Задаются через .properties файл.
  */
 public class Directories {
-    private Path firstDirectory;
-    private Path secondDirectory;
-    private Path thirdDirectory;
+    private static Directories instance;
+    private String firstDirectory;
+    private String secondDirectory;
+    private String thirdDirectory;
 
-    public Path getFirstDirectory() {
-        return firstDirectory;
+    private Directories() { }
+
+    public static Directories getInstance() {
+        if (instance == null) {
+            instance = new Directories();
+        }
+        return instance;
     }
 
-    public void setFirstDirectory(Path firstDirectory) {
+    public Path getFirstDirectory() {
+        return Paths.get(firstDirectory);
+    }
+
+    public void setFirstDirectory(String firstDirectory) {
         this.firstDirectory = firstDirectory;
     }
 
     public Path getSecondDirectory() {
-        return secondDirectory;
+        return Paths.get(secondDirectory);
     }
 
-    public void setSecondDirectory(Path secondDirectory) {
+    public void setSecondDirectory(String secondDirectory) {
         this.secondDirectory = secondDirectory;
     }
 
     public Path getThirdDirectory() {
-        return thirdDirectory;
+        return Paths.get(thirdDirectory);
     }
 
-    public void setThirdDirectory(Path thirdDirectory) {
+    public void setThirdDirectory(String thirdDirectory) {
         this.thirdDirectory = thirdDirectory;
     }
 }

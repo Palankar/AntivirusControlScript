@@ -27,7 +27,7 @@ public class ScriptBody {
     private JSONtoUserFileMap jsoNtoUserFileMap;
 
     public ScriptBody() {
-        directories = new Directories();
+        directories = Directories.getInstance();
         DirectoryService directoryService = new DirectoryServiceImpl();
         directoryService.init();
         jsonList = JSONList.getInstance();
