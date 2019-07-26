@@ -27,12 +27,14 @@ public class ScriptBody {
     private JSONtoUserFileMap jsonToUserFileMap;
 
     public ScriptBody() {
+        logger.info("Starting initializing...");
         directories = Directories.getInstance();
         DirectoryService directoryService = new DirectoryServiceImpl();
         directoryService.init();
         jsonList = JSONList.getInstance();
         userFilesList = UserFilesList.getInstance();
         jsonToUserFileMap = JSONtoUserFileMap.getInstance();
+        logger.info("Initializing complete...");
     }
 
     public void startScript() {
@@ -41,7 +43,7 @@ public class ScriptBody {
         if (jsonToUserFileMap.getMap().size() > 0) {
             movingFiles(userFilesList.getList(), directories.getFirstDirectory(), directories.getSecondDirectory());
         } else {
-            logger.info("Пар файл/json не было обнаружено в директории " + directories.getFirstDirectory());
+            logger.info("File/json pairs were not found in the directory " + directories.getFirstDirectory());
         }
         checkByAntivirus(jsonToUserFileMap.getMap());
 
@@ -53,7 +55,7 @@ public class ScriptBody {
         File[] files = directories.getFirstDirectory().toFile().listFiles();
 
         if (files.length == 0) {
-            logger.info("Файлы отсутствуют в указанной директории");
+            logger.info("Files are missing in the specified directory");
         } else {
             List<File> jsons = filterArray(files);
             findingPairs(jsons);
@@ -71,7 +73,7 @@ public class ScriptBody {
         }
 
         if (jsons.size() == 0)
-            logger.info("JSON файлы отсутствуют");
+            logger.info("JSON files missing");
 
         return jsons;
     }
@@ -94,7 +96,7 @@ public class ScriptBody {
                 }
             }
         } catch (IOException e) {
-            logger.info("Проблема при нахождении пар файл/json");
+            logger.info("The problem is in finding couples file/json");
         }
     }
 
@@ -130,7 +132,7 @@ public class ScriptBody {
                 logger.info("Файл " + filename + " удален из " + filepath);
         }
 
-        logger.info("Файлы перемещены в каталог: " + into.toString());
+        logger.info("Files moved to directory: " + into.toString());
     }
 
     private File savingFile(File file, Path into) {
@@ -170,17 +172,16 @@ public class ScriptBody {
     }
 
     public void checkByAntivirus(Map<String, File> files) {
-        logger.info("Уиии, проверка антивирусом! :3");
+        logger.info("Yay, anti-virus scanning! :3 :3");
 
         boolean isVirus = false;
         for (File file : files.values()) {
-            logger.info("Проверка файла " + file);
+            logger.info("Scanning " + file);
         }
 
-        // TODO: 25.07.2019 использовать warn в опасных случаях, вроде такого, дополнить конфиг log4j, после рефакторинга завершать программу или продолжать в зависимости от проверки (свериться с алгоритмом)
         if(isVirus)
-            logger.info("Обнаружен вирусняга!");
+            logger.info("virus detected!");
         else
-            logger.info("Проверка завершена");
+            logger.info("Scanning complete");
     }
 }

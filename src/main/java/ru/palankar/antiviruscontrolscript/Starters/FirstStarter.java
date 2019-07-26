@@ -10,7 +10,7 @@ public class FirstStarter {
     private static JSONtoUserFileMap jsonNtoUserFileMap = JSONtoUserFileMap.getInstance();
 
     public static void main(String[] args) {
-        logger.info("Starting script initializing");
+        logger.info("Starting script...");
         ScriptBody scriptBody = new ScriptBody();
 
         scriptBody.startScript();
@@ -22,6 +22,7 @@ public class FirstStarter {
         } else {
             logger.info("There are no files in first directory");
         }
+        logger.info("Script complete");
     }
     // TODO: 25.07.2019 Перед заявлением, что файлы успешно перемещены в указанную директорию нужно проверить, там ли он 
 }
