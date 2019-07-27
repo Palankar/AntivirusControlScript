@@ -109,7 +109,7 @@ public class ScriptBody {
      */
     private void movingFiles(List<File> files, Path from, Path into) {
 
-        logger.info("Начало перемещения файлов из каталога: " + from.toString());
+        logger.info("Start moving files from directory: " + from.toString());
 
         String filename = null;
         String filepath  = null;
