@@ -1,11 +1,11 @@
-package ru.palankar.antiviruscontrolscript.Repository;
+package ru.palankar.antiviruscontrolscript.Model;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Синглтон не для многопоточного использования
+ * Синглтон List с JSON
  */
 public class JSONList {
     private static JSONList instance;

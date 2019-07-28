@@ -3,9 +3,9 @@ package ru.palankar.antiviruscontrolscript;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import ru.palankar.antiviruscontrolscript.Model.Directories;
-import ru.palankar.antiviruscontrolscript.Repository.JSONList;
-import ru.palankar.antiviruscontrolscript.Repository.JSONtoUserFileMap;
-import ru.palankar.antiviruscontrolscript.Repository.UserFilesList;
+import ru.palankar.antiviruscontrolscript.Model.JSONList;
+import ru.palankar.antiviruscontrolscript.Model.JSONtoUserFileMap;
+import ru.palankar.antiviruscontrolscript.Model.UserFilesList;
 import ru.palankar.antiviruscontrolscript.Service.DirectoryService;
 import ru.palankar.antiviruscontrolscript.Service.DirectoryServiceImpl;
 
@@ -20,7 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ScriptBody {
-    private Directories directories;
+    private DirectoryService directoryService;
     private Logger logger = LogManager.getLogger(ScriptBody.class);
     private JSONList jsonList;
     private UserFilesList userFilesList;
@@ -28,8 +28,7 @@ public class ScriptBody {
 
     public ScriptBody() {
         logger.info("Starting initializing...");
-        directories = Directories.getInstance();
-        DirectoryService directoryService = new DirectoryServiceImpl();
+        directoryService = new DirectoryServiceImpl();
         directoryService.init();
         jsonList = JSONList.getInstance();
         userFilesList = UserFilesList.getInstance();
@@ -41,18 +40,18 @@ public class ScriptBody {
         fillingArray();
 
         if (jsonToUserFileMap.getMap().size() > 0) {
-            movingFiles(userFilesList.getList(), directories.getFirstDirectory(), directories.getSecondDirectory());
+            movingFiles(userFilesList.getList(), directoryService.getFirstDirectory(), directoryService.getSecondDirectory());
         } else {
-            logger.info("File/json pairs were not found in the directory " + directories.getFirstDirectory());
+            logger.info("File/json pairs were not found in the directory " + directoryService.getFirstDirectory());
         }
         checkByAntivirus(jsonToUserFileMap.getMap());
 
-        movingFiles(userFilesList.getList(), directories.getSecondDirectory(), directories.getThirdDirectory());
+        movingFiles(userFilesList.getList(), directoryService.getSecondDirectory(), directoryService.getThirdDirectory());
 
     }
 
     private void fillingArray() {
-        File[] files = directories.getFirstDirectory().toFile().listFiles();
+        File[] files = directoryService.getFirstDirectory().toFile().listFiles();
 
         if (files.length == 0) {
             logger.info("Files are missing in the specified directory");
@@ -80,7 +79,7 @@ public class ScriptBody {
 
     private void findingPairs(List<File> jsons) {
         try {
-            List<Path> files = Files.walk(Paths.get(directories.getFirstDirectory().toString()))
+            List<Path> files = Files.walk(Paths.get(directoryService.getFirstDirectory().toString()))
                     .filter(Files::isRegularFile)
                     .filter(path -> !path.toFile().getName().endsWith(".json"))
                     .collect(Collectors.toCollection(ArrayList::new));

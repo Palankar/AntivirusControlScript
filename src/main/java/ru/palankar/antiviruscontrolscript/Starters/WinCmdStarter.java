@@ -1,24 +1,43 @@
 package ru.palankar.antiviruscontrolscript.Starters;
 
+import ru.palankar.antiviruscontrolscript.Model.JSONList;
+import ru.palankar.antiviruscontrolscript.Model.JSONtoUserFileMap;
+import ru.palankar.antiviruscontrolscript.Model.UserFilesList;
+import ru.palankar.antiviruscontrolscript.Service.DirectoryService;
+import ru.palankar.antiviruscontrolscript.Service.DirectoryServiceImpl;
 import ru.palankar.antiviruscontrolscript.Service.FileService;
-import ru.palankar.antiviruscontrolscript.Service.WincmdFileService;
+import ru.palankar.antiviruscontrolscript.Service.WinCmdFileService;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 public class WinCmdStarter {
-    private static FileService fileService = new WincmdFileService();
-    private static List<File> files = new ArrayList<>();
+    private static FileService fileService = new WinCmdFileService();
+    private static DirectoryService dirService = new DirectoryServiceImpl();
+    private static JSONtoUserFileMap jsonToUserFileMap = JSONtoUserFileMap.getInstance();
+    private static UserFilesList userFilesList = UserFilesList.getInstance();
+    private static JSONList jsonList = JSONList.getInstance();
 
     public static void main(String[] args) throws Exception {
         //СРАБОТАЛО!
-        //String command = "cmd /c move C:\\B-repository\\awd.txt C:\\B-repository\\1";
-        //Runtime.getRuntime().exec(command);
+        /*
+        ByteArrayOutputStream arrOutStream = new ByteArrayOutputStream();
+        PrintStream out = new PrintStream(arrOutStream);
+        String command = "cmd /c dir G:\\C-repository";
 
-        File file = new File("C:\\Users\\palan\\Desktop\\C-repository\\test.txt");
+        System.setOut(out);
+        Runtime.getRuntime().exec(command);
+
+        System.out.println(new String(arrOutStream.toByteArray()));
+        //!!!ЗАБЫЛИ ДОБАВИТЬ В КОНЦЕ ПЕРЕД ВЫВОДОМ ВОЗВРАТ НА МЕСТО OUT!!!
+         */
+/*
+        File file = new File("G:\\C-repository\\test.txt");
         file.createNewFile();
         files.add(file);
         File renamed = fileService.renameFile(files.get(0), "newTest.txt");
+ */
+        dirService.init();  //Слабое место. Неявно, что нужно вызывать.
+        fileService.fillingArray(dirService.getFirstDirectory());
+        fileService.movingFiles(userFilesList.getList(), dirService.getFirstDirectory(), dirService.getSecondDirectory());
+
     }
 }

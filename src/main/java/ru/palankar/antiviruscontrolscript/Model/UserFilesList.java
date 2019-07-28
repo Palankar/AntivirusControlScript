@@ -1,9 +1,12 @@
-package ru.palankar.antiviruscontrolscript.Repository;
+package ru.palankar.antiviruscontrolscript.Model;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Синглтон List с файлами
+ */
 public class UserFilesList {
     private static UserFilesList instance;
     private List<File> userFiles;

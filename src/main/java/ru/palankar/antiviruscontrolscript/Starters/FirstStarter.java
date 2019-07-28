@@ -2,7 +2,7 @@ package ru.palankar.antiviruscontrolscript.Starters;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import ru.palankar.antiviruscontrolscript.Repository.JSONtoUserFileMap;
+import ru.palankar.antiviruscontrolscript.Model.JSONtoUserFileMap;
 import ru.palankar.antiviruscontrolscript.ScriptBody;
 
 public class FirstStarter {
