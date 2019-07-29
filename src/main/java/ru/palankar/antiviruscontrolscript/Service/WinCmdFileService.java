@@ -33,17 +33,18 @@ public class WinCmdFileService implements FileService {
     public void movingFiles(List<File> files, Path from, Path into) {
         try {
             logger.info("Moving files from " + from.toString() + " to " + into.toString());
-            File moved = null;
+            File movedStart = null;
             for (File file : files) {
                 File renamed = renameFile(file, FilenameUtils.getName(file.getName()) + ".part");
-                String command = "cmd /c move " + renamed.getPath() + " " + into.toString();
+                String command = "cmd /c move \"" + renamed.getPath() + "\" \"" + into.toString() + "\"";
 
                 Runtime rnt = Runtime.getRuntime();
                 Process proc = rnt.exec(command);
                 proc.waitFor();
 
-                moved = new File(into.toString() + "\\" + FilenameUtils.getName(renamed.getName()));
-                renameFile(moved, FilenameUtils.getBaseName(renamed.getName()));
+                movedStart = new File(into.toString() + "\\" + FilenameUtils.getName(renamed.getName()));
+                updateFiles(renamed, movedStart);
+                renameFile(movedStart, FilenameUtils.getBaseName(renamed.getName()));
             }
         } catch (IOException | InterruptedException e) {
             logger.error("Moving files failed");
@@ -60,25 +61,24 @@ public class WinCmdFileService implements FileService {
      * @return  File сохраненный в новое место
      */
     @Override
-    public File savingFile(File file, Path into) {
+    public void savingFile(File file, Path into) {
         logger.info("Start saving " + file.getName() + " to " + into.toString() + "...");
         File renamed = renameFile(file, FilenameUtils.getName(file.getName()) + ".part");
-        File saved = null;
+        File savedStart = null;
         try {
             logger.info("Coping " + renamed.getPath() + " to " + into.toString());
-            String command = "cmd /c copy " + renamed.getPath() + " " + into.toString();
+            String command = "cmd /c copy \"" + renamed.getPath() + "\" " + into.toString();
 
             Runtime rnt = Runtime.getRuntime();
             Process proc = rnt.exec(command);
             proc.waitFor();
 
-            saved = new File(into.toString() + "\\" + FilenameUtils.getName(renamed.getName()));
-            renameFile(saved, FilenameUtils.getBaseName(renamed.getName()));
+            savedStart = new File(into.toString() + "\\" + FilenameUtils.getName(renamed.getName()));
+            renameFile(savedStart, FilenameUtils.getBaseName(renamed.getName()));
         } catch (IOException | InterruptedException e) {
             logger.error("Error saving " + renamed.getName());
         }
         logger.info("Saving correct");
-        return saved;
     }
 
     /**
@@ -89,31 +89,35 @@ public class WinCmdFileService implements FileService {
      */
     @Override
     public File renameFile(File file, String newName) {
+        File renamed = null;
         try {
-            String command = "cmd /c rename " + file.getPath() + " " + newName;
+            String command = "cmd /c rename \"" + file.getPath() + "\" " + newName;
 
             Runtime rnt = Runtime.getRuntime();
             Process proc = rnt.exec(command);
             proc.waitFor();
+
+            renamed = new File(FilenameUtils.getFullPath(file.getPath()) + newName);
+            updateFiles(file, renamed);
         } catch (IOException | InterruptedException e) {
             logger.error("Error renaming " + file.getName());
         }
-        return new File(FilenameUtils.getFullPath(file.getPath()) + newName);
+        return renamed;
     }
 
     /**
-     * Обновляет файлы в коллекциях
-     * @param   oldUserList имеющаяся коллекция файлов
+     * Обновляет файлы в коллекциях jsonToUserFileMap и userFilesList
      * @param   oldFile     старый файл, изначально находящийся в коллекции
-     * @param   renamed     новый, переименованный файл, заменяющий старый в коллекции
+     * @param   newFile     новый файл, заменяющий старый в коллекции
      */
     @Override
-    public void updateFiles(List<File> oldUserList, File oldFile, File renamed) {
+    public void updateFiles(File oldFile, File newFile) {
         for (String key : jsonToUserFileMap.getMap().keySet()) {
-            if (key.contains(FilenameUtils.removeExtension(oldFile.getName())))
-                jsonToUserFileMap.getMap().replace(key, renamed);
+            String val = oldFile.getName().split("[.]")[0];
+            if (key.contains(val))
+                jsonToUserFileMap.getMap().replace(key, newFile);
         }
-        if (!Collections.replaceAll(oldUserList, oldFile, renamed))
+        if (!Collections.replaceAll(userFilesList.getList(), oldFile, newFile))
             logger.warn("Failed to update files");
     }
 
@@ -173,7 +177,7 @@ public class WinCmdFileService implements FileService {
     public void deleteFile(File file) {
         logger.info("Deleting " + file.getName());
         try {
-            String command = "cmd /c del " + file.getPath();
+            String command = "cmd /c del \"" + file.getPath() + "\"";
 
             Runtime rnt = Runtime.getRuntime();
             Process proc = rnt.exec(command);

@@ -25,23 +25,21 @@ public interface FileService {
      * @param   into    директория сохранения
      * @return  File из новой директории
      */
-    File savingFile(File file, Path into);
+    void savingFile(File file, Path into);
 
     /**
      * Переименовывает переданный в аргументы файл
      * @param   file    исходный файл
      * @param   newName новое имя файла
-     * @return File с новым именем
      */
     File renameFile(File file, String newName);
 
     /**
      * Заменяет файл, уже имеющийся в коллекции на новый
-     * @param   oldUserList имеющаяся коллекция файлов
      * @param   oldFile     старый файл, изначально находящийся в коллекции
      * @param   renamed     новый, переименованный файл, заменяющий старый в коллекции
      */
-    void updateFiles(List<File> oldUserList, File oldFile, File renamed);
+    void updateFiles(File oldFile, File renamed);
 
     /**
      * Антивирусная проверка файлов
