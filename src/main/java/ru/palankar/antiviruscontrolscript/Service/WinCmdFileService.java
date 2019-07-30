@@ -17,11 +17,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class WinCmdFileService implements FileService {
+public class WinCmdFileService extends CommandServiceImpl implements FileService {
     private Logger logger = LogManager.getLogger(WinCmdFileService.class);
     private JSONtoUserFileMap jsonToUserFileMap = JSONtoUserFileMap.getInstance();
     private UserFilesList userFilesList = UserFilesList.getInstance();
     private JSONList jsonList = JSONList.getInstance();
+
+    public WinCmdFileService(Path directory) {
+        fillArray(directory);
+    }
 
     /**
      * Перемещает набор файлов из одной директории в другую
@@ -30,24 +34,18 @@ public class WinCmdFileService implements FileService {
      * @param   into    конечная директория
      */
     @Override
-    public void movingFiles(List<File> files, Path from, Path into) {
-        try {
-            logger.info("Moving files from " + from.toString() + " to " + into.toString());
-            File movedStart = null;
-            for (File file : files) {
-                File renamed = renameFile(file, FilenameUtils.getName(file.getName()) + ".part");
-                String command = "cmd /c move \"" + renamed.getPath() + "\" \"" + into.toString() + "\"";
+    public void moveFiles(List<File> files, Path from, Path into) {
+        logger.info("Moving files from " + from.toString() + " to " + into.toString());
+        File movedStart = null;
+        for (File file : files) {
+            File renamed = renameFile(file, FilenameUtils.getName(file.getName()) + ".part");
+            logger.info("Moving " + renamed.getName());
 
-                Runtime rnt = Runtime.getRuntime();
-                Process proc = rnt.exec(command);
-                proc.waitFor();
+            runCmd("move \"" + renamed.getPath() + "\" \"" + into.toString() + "\"");
 
-                movedStart = new File(into.toString() + "\\" + FilenameUtils.getName(renamed.getName()));
-                updateFiles(renamed, movedStart);
-                renameFile(movedStart, FilenameUtils.getBaseName(renamed.getName()));
-            }
-        } catch (IOException | InterruptedException e) {
-            logger.error("Moving files failed");
+            movedStart = new File(into.toString() + "\\" + FilenameUtils.getName(renamed.getName()));
+            updateFiles(renamed, movedStart);
+            renameFile(movedStart, FilenameUtils.getBaseName(renamed.getName()));
         }
         logger.info("Moving files complete");
     }
@@ -61,23 +59,15 @@ public class WinCmdFileService implements FileService {
      * @return  File сохраненный в новое место
      */
     @Override
-    public void savingFile(File file, Path into) {
+    public void saveFile(File file, Path into) {
         logger.info("Start saving " + file.getName() + " to " + into.toString() + "...");
         File renamed = renameFile(file, FilenameUtils.getName(file.getName()) + ".part");
-        File savedStart = null;
-        try {
-            logger.info("Coping " + renamed.getPath() + " to " + into.toString());
-            String command = "cmd /c copy \"" + renamed.getPath() + "\" " + into.toString();
+        logger.info("Coping " + renamed.getPath() + " to " + into.toString());
 
-            Runtime rnt = Runtime.getRuntime();
-            Process proc = rnt.exec(command);
-            proc.waitFor();
+        runCmd("copy \"" + renamed.getPath() + "\" \"" + into.toString() + "\"");
 
-            savedStart = new File(into.toString() + "\\" + FilenameUtils.getName(renamed.getName()));
-            renameFile(savedStart, FilenameUtils.getBaseName(renamed.getName()));
-        } catch (IOException | InterruptedException e) {
-            logger.error("Error saving " + renamed.getName());
-        }
+        File savedStart = new File(into.toString() + "\\" + FilenameUtils.getName(renamed.getName()));
+        renameFile(savedStart, FilenameUtils.getBaseName(renamed.getName()));
         logger.info("Saving correct");
     }
 
@@ -89,46 +79,103 @@ public class WinCmdFileService implements FileService {
      */
     @Override
     public File renameFile(File file, String newName) {
-        File renamed = null;
-        try {
-            String command = "cmd /c rename \"" + file.getPath() + "\" " + newName;
+        runCmd("rename \"" + file.getPath() + "\" " + newName);
 
-            Runtime rnt = Runtime.getRuntime();
-            Process proc = rnt.exec(command);
-            proc.waitFor();
+        File renamed = new File(FilenameUtils.getFullPath(file.getPath()) + newName);
+        updateFiles(file, renamed);
 
-            renamed = new File(FilenameUtils.getFullPath(file.getPath()) + newName);
-            updateFiles(file, renamed);
-        } catch (IOException | InterruptedException e) {
-            logger.error("Error renaming " + file.getName());
-        }
         return renamed;
     }
 
     /**
-     * Обновляет файлы в коллекциях jsonToUserFileMap и userFilesList
+     * Обновляет файлы в коллекциях jsonToUserFileMap и userFilesList и
+     * JSON в коллекции jsonList
      * @param   oldFile     старый файл, изначально находящийся в коллекции
      * @param   newFile     новый файл, заменяющий старый в коллекции
      */
     @Override
     public void updateFiles(File oldFile, File newFile) {
-        for (String key : jsonToUserFileMap.getMap().keySet()) {
-            String val = oldFile.getName().split("[.]")[0];
-            if (key.contains(val))
-                jsonToUserFileMap.getMap().replace(key, newFile);
+        if (!oldFile.getName().contains(".json")) {
+            for (String key : jsonToUserFileMap.getMap().keySet()) {
+                String val = oldFile.getName().split("[.]")[0];
+                if (key.contains(val))
+                    jsonToUserFileMap.getMap().replace(key, newFile);
+            }
+            if (!Collections.replaceAll(userFilesList.getList(), oldFile, newFile))
+                logger.warn("Failed to update files");
+        } else {
+            if (!Collections.replaceAll(jsonList.getList(), oldFile, newFile))
+                logger.warn("Failed to update jsons");
         }
-        if (!Collections.replaceAll(userFilesList.getList(), oldFile, newFile))
-            logger.warn("Failed to update files");
     }
 
     /**
-     * Проходится по файлам из заданной директории и сопостоявляет их с данными JSON, и
-     * если имена совпадают - добавляет их в JSONtoUserFileMap и UserFilesList
-     * @param   jsons       заданные JSON
-     * @param   directory   директория, в которой осуществляется поиск
+     * Проверка антивирусом. Пока что чисто фиктивная
+     * @param   files   коллекция, содержащая файлы на проверку антивирусом
      */
     @Override
-    public void findingPairs(List<File> jsons, Path directory) {
+    public void checkByAntivirus(Map<String, File> files) {
+        logger.info("Yay, anti-virus scanning! :3");
+
+        boolean isVirus = false;
+        File renamed = null;
+        for (File file : files.values()) {
+            renamed = renameFile(file, file.getName() + ".checking");
+            logger.info("Scanning " + renamed);
+            renameFile(renamed, FilenameUtils.removeExtension(renamed.getName()));
+        }
+
+        if(isVirus)
+            logger.info("virus detected!");
+        else
+            logger.info("Scanning complete");
+    }
+
+    /**
+     * Удаляет переданный в аргументы файл
+     * @param   file    удаляемый файл
+     */
+    @Override
+    public void deleteFile(File file) {
+        logger.info("Deleting " + file.getName());
+
+        runCmd("del \"" + file.getPath() + "\"");
+
+        logger.info("File " + file.getName() + " deleted");
+    }
+
+    private void fillArray(Path directory) {
+        File[] files = directory.toFile().listFiles();
+
+        if (files.length == 0) {
+            logger.info("Files are missing in the specified directory");
+        } else {
+            List<File> jsons = filterArray(files);
+            findPairs(jsons, directory);
+
+            for (File json : jsons) {
+                String jsName = FilenameUtils.getName(json.getName());
+                if (jsonToUserFileMap.getMap().containsKey(jsName))
+                    jsonList.getList().add(json);
+            }
+        }
+    }
+
+    private List<File> filterArray(File[] files) {
+        ArrayList<File> jsons = new ArrayList<>();
+
+        for (File json : files) {
+            if (json.getName().endsWith(".json"))
+                jsons.add(json);
+        }
+
+        if (jsons.size() == 0)
+            logger.info("JSON files missing");
+
+        return jsons;
+    }
+
+    private void findPairs(List<File> jsons, Path directory) {
         // TODO: 28.07.2019 попробовать провести поиск по директории с помощью dir и перехвата данных с консоли
         try {
             List<Path> files = Files.walk(directory)
@@ -149,72 +196,4 @@ public class WinCmdFileService implements FileService {
             logger.error("JSON/File pair search error");
         }
     }
-
-    /**
-     * Проверка антивирусом. Пока что чисто фиктивная
-     * @param   files   коллекция, содержащая файлы на проверку антивирусом
-     */
-    @Override
-    public void checkByAntivirus(Map<String, File> files) {
-        logger.info("Yay, anti-virus scanning! :3 :3");
-
-        boolean isVirus = false;
-        for (File file : files.values()) {
-            logger.info("Scanning " + file);
-        }
-
-        if(isVirus)
-            logger.info("virus detected!");
-        else
-            logger.info("Scanning complete");
-    }
-
-    /**
-     * Удаляет переданный в аргументы файл
-     * @param   file    удаляемый файл
-     */
-    @Override
-    public void deleteFile(File file) {
-        logger.info("Deleting " + file.getName());
-        try {
-            String command = "cmd /c del \"" + file.getPath() + "\"";
-
-            Runtime rnt = Runtime.getRuntime();
-            Process proc = rnt.exec(command);
-            proc.waitFor();
-        } catch (IOException | InterruptedException e) {
-            logger.error("Deletion " + file.getName() + " failed");
-        }
-        logger.info("File " + file.getName() + " deleted");
-    }
-
-    @Override
-    public void fillingArray(Path directory) {
-        File[] files = directory.toFile().listFiles();
-
-        if (files.length == 0) {
-            logger.info("Files are missing in the specified directory");
-        } else {
-            List<File> jsons = filterArray(files);
-            findingPairs(jsons, directory);
-            jsonList.getList().addAll(jsons);
-        }
-    }
-
-    @Override
-    public List<File> filterArray(File[] files) {
-        ArrayList<File> jsons = new ArrayList<>();
-
-        for (File json : files) {
-            if (json.getName().endsWith(".json"))
-                jsons.add(json);
-        }
-
-        if (jsons.size() == 0)
-            logger.info("JSON files missing");
-
-        return jsons;
-    }
-
-    // TODO: 29.07.2019  filterArray, fillingArray, findingPairs - больше, все же, Util классы приватные. Надо вынести.
 }

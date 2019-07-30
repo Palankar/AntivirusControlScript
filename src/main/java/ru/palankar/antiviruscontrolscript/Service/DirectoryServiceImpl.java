@@ -14,25 +14,30 @@ public class DirectoryServiceImpl implements DirectoryService {
     private Logger logger;
     private Directories directories;
 
-    //"src/main/resources/directories.properties" - для запуска с IDE
-    //System.getProperty("user.dir") + "\\directories.properties" - для хапуска с билда
-    private static final String PATH_TO_DIR_PROPERTIES = "src/main/resources/directories.properties";
-
-
     public DirectoryServiceImpl() {
         logger = LogManager.getLogger(DirectoryServiceImpl.class);
         directories = Directories.getInstance();
+    }
+
+    /**
+     * Конструктор, вызываемый, когда требуется мгновенная инициализация
+     * @param   properties  путь до property-файла
+     */
+    public DirectoryServiceImpl(String properties) {
+        logger = LogManager.getLogger(DirectoryServiceImpl.class);
+        directories = Directories.getInstance();
+        init(properties);
     }
     /**
      * Инициалиизация директорий из .properties файла
      * Файл обязательно должен лежать в одной директории со скриптом
      */
     @Override
-    public void init() {
+    public void init(String properties) {
         try {
             logger.info("Initializing properties...");
             Properties prop = new Properties();
-            prop.load(new FileInputStream(PATH_TO_DIR_PROPERTIES));
+            prop.load(new FileInputStream(properties));
 
             setFirstDirectory(prop.getProperty("FirstDirectory"));
             logger.info("Direction property " + prop.getProperty("FirstDirectory") + " initialised");
@@ -42,6 +47,8 @@ public class DirectoryServiceImpl implements DirectoryService {
             logger.info("Direction property " + prop.getProperty("ThirdDirectory") + " initialised");
         } catch (IOException e) {
             logger.error("PROPERTY FILE directories.properties COULD NOT FOUND");
+            System.exit(0);
+            // TODO: 30.07.2019 Пока что все коды возврата на 0, потому что логирую. Потом разобраться и подобрать
         }
         logger.info("Initializing complete");
     }

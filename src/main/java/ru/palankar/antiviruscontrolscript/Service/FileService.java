@@ -1,7 +1,5 @@
 package ru.palankar.antiviruscontrolscript.Service;
 
-import ru.palankar.antiviruscontrolscript.Model.Directories;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
@@ -17,7 +15,7 @@ public interface FileService {
      * @param   from    начальная директория
      * @param   into    конечная директория
      */
-    void movingFiles(List<File> files, Path from, Path into);
+    void moveFiles(List<File> files, Path from, Path into);
 
     /**
      * Сохранение отдельного файла в указанную директорию
@@ -25,7 +23,7 @@ public interface FileService {
      * @param   into    директория сохранения
      * @return  File из новой директории
      */
-    void savingFile(File file, Path into);
+    void saveFile(File file, Path into);
 
     /**
      * Переименовывает переданный в аргументы файл
@@ -48,20 +46,15 @@ public interface FileService {
     void checkByAntivirus(Map<String, File> files);
 
     /**
-     * Проходится по файлам из заданной директории и сопостоявляет их с данными JSON, и
-     * если имена совпадают - добавляет их в JSONtoUserFileMap и UserFilesList
-     * @param   jsons       заданные JSON
-     * @param   directory   директория, в которой осуществляется поиск
-     */
-    void findingPairs(List<File> jsons, Path directory);
-
-    /**
      * Удаляет пекреданный в качестве аргумента файл
      * @param   file    удаляемый файл
      */
     void deleteFile(File file);
 
-    void fillingArray(Path directory);
-
-    List<File> filterArray(File[] files);
+    /**
+     * Перемещает набор JSON из одной директории в другую
+     * @param   jsons   исходная коллекция json
+     * @param   from    начальная директория
+     * @param   into    конечная директория
+     */
 }

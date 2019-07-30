@@ -8,8 +8,9 @@ public interface DirectoryService {
     /**
      * Инициалиизация директорий из .properties файла
      * Файл обязательно должен лежать в одной директории со скриптом
+     * @param   properties  путь к файлу с указаниями директорий
      */
-    void init();
+    void init(String properties);
 
     /**
      * Получить путь стартовой директории

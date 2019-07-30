@@ -2,7 +2,6 @@ package ru.palankar.antiviruscontrolscript;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import ru.palankar.antiviruscontrolscript.Model.Directories;
 import ru.palankar.antiviruscontrolscript.Model.JSONList;
 import ru.palankar.antiviruscontrolscript.Model.JSONtoUserFileMap;
 import ru.palankar.antiviruscontrolscript.Model.UserFilesList;
@@ -29,7 +28,7 @@ public class ScriptBody {
     public ScriptBody() {
         logger.info("Starting initializing...");
         directoryService = new DirectoryServiceImpl();
-        directoryService.init();
+        directoryService.init("src/main/resources/directories.properties");
         jsonList = JSONList.getInstance();
         userFilesList = UserFilesList.getInstance();
         jsonToUserFileMap = JSONtoUserFileMap.getInstance();
