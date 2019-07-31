@@ -10,8 +10,17 @@ import ru.palankar.antiviruscontrolscript.Service.DirectoryServiceImpl;
 import ru.palankar.antiviruscontrolscript.Service.FileService;
 import ru.palankar.antiviruscontrolscript.Service.WinCmdFileService;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.charset.Charset;
+
 
 public class WinCmdStarter {
+    private static File file = new File("D:\\A-repository (reserve)\\test.json");
+
+    /*
     //"src/main/resources/directories.properties" - для запуска с IDE
     //System.getProperty("user.dir") + "\\directories.properties" - для хапуска с билда
     private static final String PATH_TO_DIR_PROPERTIES = "src/main/resources/irectories.properties";
@@ -32,5 +41,14 @@ public class WinCmdStarter {
         } else {
             logger.warn("Required files not found");
         }
+    }
+    */
+
+    public static void main(String[] args) throws IOException {
+        PrintWriter writer = new PrintWriter(new FileWriter(file, true));
+        writer.print("\r\nNEW TEXT");
+        writer.print("\r\nНОВЫЙ ТЕКСТ");
+        writer.flush();
+        writer.close();
     }
 }

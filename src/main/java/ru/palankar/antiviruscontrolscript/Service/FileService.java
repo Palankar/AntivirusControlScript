@@ -52,9 +52,10 @@ public interface FileService {
     void deleteFile(File file);
 
     /**
-     * Перемещает набор JSON из одной директории в другую
-     * @param   jsons   исходная коллекция json
-     * @param   from    начальная директория
-     * @param   into    конечная директория
+     * Проверяет набор файлов на существование
+     * @param   files   проверяемая коллекция файлов
+     * @return  <code>true</code>, если каждый файл существует, иначе <code>false</code>
      */
+    boolean isFilesExists(List<File> files);
+
 }

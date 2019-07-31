@@ -7,8 +7,7 @@ import ru.palankar.antiviruscontrolscript.Model.JSONList;
 import ru.palankar.antiviruscontrolscript.Model.JSONtoUserFileMap;
 import ru.palankar.antiviruscontrolscript.Model.UserFilesList;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -36,18 +35,24 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
     @Override
     public void moveFiles(List<File> files, Path from, Path into) {
         logger.info("Moving files from " + from.toString() + " to " + into.toString());
-        File movedStart = null;
+
+        List<File> movedFiles = new ArrayList<>();
         for (File file : files) {
             File renamed = renameFile(file, FilenameUtils.getName(file.getName()) + ".part");
-            logger.info("Moving " + renamed.getName());
+            logger.info("Moving " + renamed.getName() + "...");
 
             runCmd("move \"" + renamed.getPath() + "\" \"" + into.toString() + "\"");
 
-            movedStart = new File(into.toString() + "\\" + FilenameUtils.getName(renamed.getName()));
+            File movedStart = new File(into.toString() + "\\" + FilenameUtils.getName(renamed.getName()));
             updateFiles(renamed, movedStart);
-            renameFile(movedStart, FilenameUtils.getBaseName(renamed.getName()));
+            File movedFinal = renameFile(movedStart, FilenameUtils.getBaseName(renamed.getName()));
+            movedFiles.add(movedFinal);
         }
-        logger.info("Moving files complete");
+
+        if (isFilesExists(movedFiles))
+            logger.info("Moving files complete");
+        else
+            logger.error("MOVED FILES DOES NOT EXISTS");
     }
 
     /**
@@ -60,15 +65,18 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
      */
     @Override
     public void saveFile(File file, Path into) {
-        logger.info("Start saving " + file.getName() + " to " + into.toString() + "...");
+        logger.info("Start saving " + file.getName() + " to " + into.toString());
         File renamed = renameFile(file, FilenameUtils.getName(file.getName()) + ".part");
-        logger.info("Coping " + renamed.getPath() + " to " + into.toString());
+        logger.info("Coping " + renamed.getPath() + " to " + into.toString() + "...");
 
         runCmd("copy \"" + renamed.getPath() + "\" \"" + into.toString() + "\"");
 
         File savedStart = new File(into.toString() + "\\" + FilenameUtils.getName(renamed.getName()));
-        renameFile(savedStart, FilenameUtils.getBaseName(renamed.getName()));
-        logger.info("Saving correct");
+        File savedFinal = renameFile(savedStart, FilenameUtils.getBaseName(renamed.getName()));
+        if (savedFinal.exists())
+            logger.info("Saving correct");
+        else
+            logger.error("SAVED FILE DOES NOT EXISTS");
     }
 
     /**
@@ -82,7 +90,13 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
         runCmd("rename \"" + file.getPath() + "\" " + newName);
 
         File renamed = new File(FilenameUtils.getFullPath(file.getPath()) + newName);
-        updateFiles(file, renamed);
+
+        if (renamed.exists()) {
+            updateFiles(file, renamed);
+        } else {
+            logger.error("FILE " + renamed.getName() + " DOES NOT EXISTS");
+            return null;
+        }
 
         return renamed;
     }
@@ -115,20 +129,41 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
      */
     @Override
     public void checkByAntivirus(Map<String, File> files) {
-        logger.info("Yay, anti-virus scanning! :3");
+        logger.info("Anti-virus scanning...");
 
-        boolean isVirus = false;
+        int KAVResult;
         File renamed = null;
         for (File file : files.values()) {
             renamed = renameFile(file, file.getName() + ".checking");
             logger.info("Scanning " + renamed);
-            renameFile(renamed, FilenameUtils.removeExtension(renamed.getName()));
-        }
 
-        if(isVirus)
-            logger.info("virus detected!");
-        else
-            logger.info("Scanning complete");
+            /*
+                   ПРОВЕРКА АНТИВИРУСА
+
+            KAVResult = 1;  //Что вернет антивирь
+
+            if(KAVResult != 0) {
+                logger.warn("VIRUS DETECTED IN FILE " + file);
+
+                File jsonToVirusFile = null;
+                for (File json : jsonList.getList()) {
+                    if (json.getName().contains(FilenameUtils.getBaseName(file.getName())))
+                        jsonToVirusFile = json;
+                }
+
+                try {
+                    //ИСПОЛЬЗУЕМ ЗАПИСЬ В JSON
+                } catch (IOException e) {
+                    logger.error("ERROR WRITING DATA TO JSON: " + jsonToVirusFile.getName());
+                }
+
+            } else {
+                renameFile(renamed, FilenameUtils.removeExtension(renamed.getName()));
+            }
+
+            */
+        }
+        logger.info("Scanning complete");
     }
 
     /**
@@ -142,6 +177,23 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
         runCmd("del \"" + file.getPath() + "\"");
 
         logger.info("File " + file.getName() + " deleted");
+    }
+
+    /**
+     * Проверяет набор файлов на существование
+     * @param   files   проверяемая коллекция файлов
+     * @return  <code>true</code>, если каждый файл существует, иначе <code>false</code>
+     */
+    @Override
+    public boolean isFilesExists(List<File> files) {
+        boolean isExist = true;
+
+        for (File file : files) {
+            if (!file.exists())
+                isExist = false;
+        }
+
+        return isExist;
     }
 
     private void fillArray(Path directory) {

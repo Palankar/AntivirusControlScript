@@ -1,3 +1,3 @@
 Manifest-Version: 1.0
-Main-Class: ru.palankar.antiviruscontrolscript.Starters.FirstStarter
+Main-Class: ru.palankar.antiviruscontrolscript.Starters.MainStarter
 
