@@ -9,7 +9,7 @@ import org.json.simple.parser.ParseException;
 import java.io.*;
 
 public class JSONServiceImpl implements JSONService {
-    Logger logger = LogManager.getLogger(JSONServiceImpl.class);
+    private Logger logger = LogManager.getLogger(JSONServiceImpl.class);
 
     /**
      * Добавляет в имеющийся JSON-файл параметр со значением, если такого

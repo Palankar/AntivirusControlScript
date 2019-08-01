@@ -6,7 +6,7 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 
 public class CommandServiceImpl implements CommandService {
-    Logger logger = LogManager.getLogger(CommandServiceImpl.class);
+    private Logger logger = LogManager.getLogger(CommandServiceImpl.class);
 
     /**
      * Запускает команду под Windows

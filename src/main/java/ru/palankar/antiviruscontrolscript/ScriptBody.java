@@ -10,6 +10,8 @@ import ru.palankar.antiviruscontrolscript.Service.DirectoryServiceImpl;
 import ru.palankar.antiviruscontrolscript.Service.FileService;
 import ru.palankar.antiviruscontrolscript.Service.WinCmdFileService;
 
+import java.io.File;
+
 public class ScriptBody {
     //"src/main/resources/directories.properties" - для запуска с IDE
     //System.getProperty("user.dir") + "\\directories.properties" - для хапуска с билда
@@ -36,11 +38,16 @@ public class ScriptBody {
         if (jsonToUserFileMap.getMap().size() > 0) {
             fileService.moveFiles(userFilesList.getList(),
                     dirService.getFirstDirectory(), dirService.getSecondDirectory());
-            fileService.checkByAntivirus(jsonToUserFileMap.getMap());
-            fileService.moveFiles(userFilesList.getList(),
-                    dirService.getSecondDirectory(), dirService.getThirdDirectory());
-            fileService.moveFiles(jsonList.getList(),
-                    dirService.getFirstDirectory(), dirService.getThirdDirectory());
+            if (fileService.checkByAntivirus(jsonToUserFileMap.getMap())) {
+                for (File file : userFilesList.getList()) {
+                    fileService.deleteFile(file);
+                }
+            } else {
+                fileService.moveFiles(userFilesList.getList(),
+                        dirService.getSecondDirectory(), dirService.getThirdDirectory());
+                fileService.moveFiles(jsonList.getList(),
+                        dirService.getFirstDirectory(), dirService.getThirdDirectory());
+            }
         } else {
             logger.warn("Required files not found");
         }

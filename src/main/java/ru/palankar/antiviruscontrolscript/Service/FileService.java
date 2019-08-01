@@ -18,10 +18,17 @@ public interface FileService {
     void moveFiles(List<File> files, Path from, Path into);
 
     /**
+     * Перемещает файл из одной директории в другую
+     * @param   file    исходный файл
+     * @param   from    начальная директория
+     * @param   into    конечная директория
+     */
+    void moveFile(File file, Path from, Path into);
+
+    /**
      * Сохранение отдельного файла в указанную директорию
      * @param   file    файл для сохранения
      * @param   into    директория сохранения
-     * @return  File из новой директории
      */
     void saveFile(File file, Path into);
 
@@ -42,8 +49,9 @@ public interface FileService {
     /**
      * Антивирусная проверка файлов
      * @param   files   коллекция, содержащая файлы на проверку антивирусом
+     * @return  <code>true</code> при нахождении вируса, иначе <code>false</code>
      */
-    void checkByAntivirus(Map<String, File> files);
+    boolean checkByAntivirus(Map<String, File> files);
 
     /**
      * Удаляет пекреданный в качестве аргумента файл

@@ -21,6 +21,11 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
     private JSONtoUserFileMap jsonToUserFileMap = JSONtoUserFileMap.getInstance();
     private UserFilesList userFilesList = UserFilesList.getInstance();
     private JSONList jsonList = JSONList.getInstance();
+    private JSONService jsonService = new JSONServiceImpl();
+    private DirectoryService dirService = new DirectoryServiceImpl();
+    // TODO: 31.07.2019 Переделать хардкод, когда дадут вызов антивируса
+    private static final String KAVResult = "0";    //Что вернет антивирь
+
 
     public WinCmdFileService(Path directory) {
         fillArray(directory);
@@ -56,12 +61,36 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
     }
 
     /**
+     * Перемещает файл из одной директории в другую
+     * @param   file    исходный файл
+     * @param   from    начальная директория
+     * @param   into    конечная директория
+     */
+    @Override
+    public void moveFile(File file, Path from, Path into) {
+        logger.info("Moving file from " + from.toString() + " to " + into.toString());
+
+            File renamed = renameFile(file, FilenameUtils.getName(file.getName()) + ".part");
+            logger.info("Moving " + renamed.getName() + "...");
+
+            runCmd("move \"" + renamed.getPath() + "\" \"" + into.toString() + "\"");
+
+            File movedStart = new File(into.toString() + "\\" + FilenameUtils.getName(renamed.getName()));
+            updateFiles(renamed, movedStart);
+            File movedFinal = renameFile(movedStart, FilenameUtils.getBaseName(renamed.getName()));
+
+        if (movedFinal.exists())
+            logger.info("Moving files complete");
+        else
+            logger.error("MOVED FILES DOES NOT EXISTS");
+    }
+
+    /**
      * Сохраняет переданный файл в указанную директорию, предварительно добавив к его имени
      * расширение .part во избежание обращения в процессе сохранения со стороны других программ.
      * По завершению процесса сохранения приставка .part удаляется
      * @param   file    файл для сохранения
      * @param   into    директория сохранения
-     * @return  File сохраненный в новое место
      */
     @Override
     public void saveFile(File file, Path into) {
@@ -126,44 +155,47 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
     /**
      * Проверка антивирусом. Пока что чисто фиктивная
      * @param   files   коллекция, содержащая файлы на проверку антивирусом
+     * @return  <code>true</code> при нахождении вируса, иначе <code>false</code>
      */
     @Override
-    public void checkByAntivirus(Map<String, File> files) {
+    public boolean checkByAntivirus(Map<String, File> files) {
         logger.info("Anti-virus scanning...");
 
-        int KAVResult;
-        File renamed = null;
         for (File file : files.values()) {
-            renamed = renameFile(file, file.getName() + ".checking");
+            File renamed = renameFile(file, file.getName() + ".checking");
             logger.info("Scanning " + renamed);
 
-            /*
-                   ПРОВЕРКА АНТИВИРУСА
 
-            KAVResult = 1;  //Что вернет антивирь
-
-            if(KAVResult != 0) {
+            if(!KAVResult.equals("0")) {
                 logger.warn("VIRUS DETECTED IN FILE " + file);
 
-                File jsonToVirusFile = null;
+                //Ищет json к файлу. попробовать вынести в отдельный метод?
+                File jsonToFile = null;
                 for (File json : jsonList.getList()) {
                     if (json.getName().contains(FilenameUtils.getBaseName(file.getName())))
-                        jsonToVirusFile = json;
+                        jsonToFile = json;
                 }
 
-                try {
-                    //ИСПОЛЬЗУЕМ ЗАПИСЬ В JSON
-                } catch (IOException e) {
-                    logger.error("ERROR WRITING DATA TO JSON: " + jsonToVirusFile.getName());
+                jsonService.putParam(jsonToFile, "AntivirusScanResult", KAVResult);
+
+                File errorsDir;
+                if (!(errorsDir = new File(dirService.getSecondDirectory().toString() + "\\Errors")).exists()) {
+                    if (!errorsDir.mkdir())
+                        logger.error("Failed to create directory " + errorsDir.getName());
+                    moveFile(jsonToFile, dirService.getFirstDirectory(), errorsDir.toPath());
+                } else {
+                    moveFile(jsonToFile, dirService.getFirstDirectory(), errorsDir.toPath());
                 }
 
+                renameFile(renamed, FilenameUtils.removeExtension(renamed.getName()));
             } else {
                 renameFile(renamed, FilenameUtils.removeExtension(renamed.getName()));
             }
 
-            */
         }
         logger.info("Scanning complete");
+
+        return !KAVResult.equals("0");
     }
 
     /**
@@ -199,6 +231,7 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
     private void fillArray(Path directory) {
         File[] files = directory.toFile().listFiles();
 
+        assert files != null : "Files array is empty";  // TODO: 01.08.2019 разберись с assert
         if (files.length == 0) {
             logger.info("Files are missing in the specified directory");
         } else {
