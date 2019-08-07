@@ -12,18 +12,16 @@ public interface FileService {
     /**
      * Перемещает набор файлов из одной директории в другую
      * @param   files   исходная коллекция файлов
-     * @param   from    начальная директория
      * @param   into    конечная директория
      */
-    void moveFiles(List<File> files, Path from, Path into);
+    void moveFiles(List<File> files, Path into);
 
     /**
      * Перемещает файл из одной директории в другую
      * @param   file    исходный файл
-     * @param   from    начальная директория
      * @param   into    конечная директория
      */
-    void moveFile(File file, Path from, Path into);
+    void moveFile(File file, Path into);
 
     /**
      * Сохранение отдельного файла в указанную директорию

@@ -34,13 +34,10 @@ public class ScriptBody {
         logger.info("Starting script...");
 
         if (jsonToUserFileMap.getMap().size() > 0) {
-            fileService.moveFiles(userFilesList.getList(),
-                    dirService.getFirstDirectory(), dirService.getSecondDirectory());
+            fileService.moveFiles(userFilesList.getList(), dirService.getSecondDirectory());
             fileService.checkByAntivirus(jsonToUserFileMap.getMap());
-            fileService.moveFiles(userFilesList.getList(),
-                    dirService.getSecondDirectory(), dirService.getThirdDirectory());
-            fileService.moveFiles(jsonList.getList(),
-                    dirService.getFirstDirectory(), dirService.getThirdDirectory());
+            fileService.moveFiles(userFilesList.getList(), dirService.getThirdDirectory());
+            fileService.moveFiles(jsonList.getList(), dirService.getThirdDirectory());
         } else {
             logger.warn("Required files not found");
         }

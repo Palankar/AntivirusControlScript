@@ -6,7 +6,6 @@ import org.apache.log4j.Logger;
 import ru.palankar.antiviruscontrolscript.Model.JSONList;
 import ru.palankar.antiviruscontrolscript.Model.JSONtoUserFileMap;
 import ru.palankar.antiviruscontrolscript.Model.UserFilesList;
-
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,12 +33,11 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
     /**
      * Перемещает набор файлов из одной директории в другую
      * @param   files   исходная коллекция файлов
-     * @param   from    начальная директория
      * @param   into    конечная директория
      */
     @Override
-    public void moveFiles(List<File> files, Path from, Path into) {
-        logger.info("Moving files from " + from.toString() + " to " + into.toString());
+    public void moveFiles(List<File> files, Path into) {
+        logger.info("Moving files from " + FilenameUtils.getFullPath(files.get(0).getPath()) + " to " + into.toString());
 
         List<File> movedFiles = new ArrayList<>();
         for (File file : files) {
@@ -70,12 +68,11 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
     /**
      * Перемещает файл из одной директории в другую
      * @param   file    исходный файл
-     * @param   from    начальная директория
      * @param   into    конечная директория
      */
     @Override
-    public void moveFile(File file, Path from, Path into) {
-        logger.info("Moving file from " + from.toString() + " to " + into.toString());
+    public void moveFile(File file, Path into) {
+        logger.info("Moving file from " + FilenameUtils.getFullPath(file.getPath()) + " to " + into.toString());
 
         File renamed = renameFile(file, FilenameUtils.getName(file.getName()) + ".part", true);
         logger.info("Moving " + renamed.getName() + "...");
@@ -204,9 +201,9 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
                 if (!(errorsDir = dirService.getErrorsDirectory().toFile()).exists()) {
                     if (!errorsDir.mkdir())
                         logger.error("Failed to create directory " + errorsDir.getName());
-                    moveFile(jsonToFile, dirService.getFirstDirectory(), errorsDir.toPath());
+                    moveFile(jsonToFile, errorsDir.toPath());
                 } else {
-                    moveFile(jsonToFile, dirService.getFirstDirectory(), errorsDir.toPath());
+                    moveFile(jsonToFile, errorsDir.toPath());
                 }
 
                 renameFile(renamed, FilenameUtils.removeExtension(renamed.getName()), true);
