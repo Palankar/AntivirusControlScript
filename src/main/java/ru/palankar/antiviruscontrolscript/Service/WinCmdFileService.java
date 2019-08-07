@@ -231,7 +231,7 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
     private void fillArray(Path directory) {
         File[] files = directory.toFile().listFiles();
 
-        assert files != null : "Files array is empty";  // TODO: 01.08.2019 разберись с assert
+        assert files != null : "Files array is nullable";
         if (files.length == 0) {
             logger.info("Files are missing in the specified directory");
         } else {
@@ -239,8 +239,8 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
             findPairs(jsons, directory);
 
             for (File json : jsons) {
-                String jsName = FilenameUtils.getName(json.getName());
-                if (jsonToUserFileMap.getMap().containsKey(jsName))
+                String jsonName = FilenameUtils.getName(json.getName());
+                if (jsonToUserFileMap.getMap().containsKey(jsonName))
                     jsonList.getList().add(json);
             }
         }
@@ -249,9 +249,9 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
     private List<File> filterArray(File[] files) {
         ArrayList<File> jsons = new ArrayList<>();
 
-        for (File json : files) {
-            if (json.getName().endsWith(".json"))
-                jsons.add(json);
+        for (File file : files) {
+            if (file.getName().endsWith(".json"))
+                jsons.add(file);
         }
 
         if (jsons.size() == 0)

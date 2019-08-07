@@ -2,17 +2,14 @@ package ru.palankar.antiviruscontrolscript.Service;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.json.simple.JSONObject;
 import ru.palankar.antiviruscontrolscript.Model.Directories;
-
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Properties;
 
 public class DirectoryServiceImpl implements DirectoryService {
     private Logger logger;
     private Directories directories;
+    private JSONService jsonService;
 
     public DirectoryServiceImpl() {
         logger = LogManager.getLogger(DirectoryServiceImpl.class);
@@ -26,6 +23,7 @@ public class DirectoryServiceImpl implements DirectoryService {
     public DirectoryServiceImpl(String properties) {
         logger = LogManager.getLogger(DirectoryServiceImpl.class);
         directories = Directories.getInstance();
+        jsonService = new JSONServiceImpl();
         init(properties);
     }
     /**
@@ -36,16 +34,15 @@ public class DirectoryServiceImpl implements DirectoryService {
     public void init(String properties) {
         try {
             logger.info("Initializing properties...");
-            Properties prop = new Properties();
-            prop.load(new FileInputStream(properties));
+            JSONObject dirJSON = jsonService.getObj(properties);
 
-            setFirstDirectory(prop.getProperty("FirstDirectory"));
-            logger.info("Direction property " + prop.getProperty("FirstDirectory") + " initialised");
-            setSecondDirectory(prop.getProperty("SecondDirectory"));
-            logger.info("Direction property " + prop.getProperty("SecondDirectory") + " initialised");
-            setThirdDirectory(prop.getProperty("ThirdDirectory"));
-            logger.info("Direction property " + prop.getProperty("ThirdDirectory") + " initialised");
-        } catch (IOException e) {
+            setFirstDirectory(dirJSON.get("FirstDirectory").toString());
+            logger.info("Direction property " + dirJSON.get("FirstDirectory").toString() + " initialised");
+            setSecondDirectory(dirJSON.get("SecondDirectory").toString());
+            logger.info("Direction property " + dirJSON.get("SecondDirectory").toString() + " initialised");
+            setThirdDirectory(dirJSON.get("ThirdDirectory").toString());
+            logger.info("Direction property " + dirJSON.get("ThirdDirectory").toString() + " initialised");
+        } catch (Exception e) {
             logger.error("PROPERTY FILE directories.properties COULD NOT FOUND");
             System.exit(0);
             // TODO: 30.07.2019 Пока что все коды возврата на 0, потому что логирую. Потом разобраться и подобрать
