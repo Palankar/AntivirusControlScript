@@ -43,7 +43,7 @@ public class DirectoryServiceImpl implements DirectoryService {
             setThirdDirectory(dirJSON.get("ThirdDirectory").toString());
             logger.info("Direction property " + dirJSON.get("ThirdDirectory").toString() + " initialised");
         } catch (Exception e) {
-            logger.error("PROPERTY FILE directories.properties COULD NOT FOUND");
+            logger.error("PROPERTY FILE directories.json COULD NOT FOUND");
             System.exit(0);
             // TODO: 30.07.2019 Пока что все коды возврата на 0, потому что логирую. Потом разобраться и подобрать
         }

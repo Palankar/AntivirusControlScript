@@ -21,9 +21,9 @@ public class WinCmdStarter {
     private static File file = new File("D:\\A-repository (reserve)\\test.json");
 
     /*
-    //"src/main/resources/directories.properties" - для запуска с IDE
-    //System.getProperty("user.dir") + "\\directories.properties" - для хапуска с билда
-    private static final String PATH_TO_DIR_PROPERTIES = "src/main/resources/irectories.properties";
+    //"src/main/resources/directories.json" - для запуска с IDE
+    //System.getProperty("user.dir") + "\\directories.json" - для хапуска с билда
+    private static final String PATH_TO_DIR_PROPERTIES = "src/main/resources/directories.json";
 
     private static Logger logger = LogManager.getLogger(WinCmdStarter.class);
     private static DirectoryService dirService = new DirectoryServiceImpl(PATH_TO_DIR_PROPERTIES);
