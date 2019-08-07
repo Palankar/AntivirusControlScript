@@ -10,8 +10,6 @@ import ru.palankar.antiviruscontrolscript.Service.DirectoryServiceImpl;
 import ru.palankar.antiviruscontrolscript.Service.FileService;
 import ru.palankar.antiviruscontrolscript.Service.WinCmdFileService;
 
-import java.io.File;
-
 public class ScriptBody {
     //"src/main/resources/directories.json" - для запуска с IDE
     //System.getProperty("user.dir") + "\\directories.json" - для хапуска с билда
@@ -38,16 +36,11 @@ public class ScriptBody {
         if (jsonToUserFileMap.getMap().size() > 0) {
             fileService.moveFiles(userFilesList.getList(),
                     dirService.getFirstDirectory(), dirService.getSecondDirectory());
-            if (fileService.checkByAntivirus(jsonToUserFileMap.getMap())) {
-                for (File file : userFilesList.getList()) {
-                    fileService.deleteFile(file);
-                }
-            } else {
-                fileService.moveFiles(userFilesList.getList(),
-                        dirService.getSecondDirectory(), dirService.getThirdDirectory());
-                fileService.moveFiles(jsonList.getList(),
-                        dirService.getFirstDirectory(), dirService.getThirdDirectory());
-            }
+            fileService.checkByAntivirus(jsonToUserFileMap.getMap());
+            fileService.moveFiles(userFilesList.getList(),
+                    dirService.getSecondDirectory(), dirService.getThirdDirectory());
+            fileService.moveFiles(jsonList.getList(),
+                    dirService.getFirstDirectory(), dirService.getThirdDirectory());
         } else {
             logger.warn("Required files not found");
         }
@@ -56,6 +49,4 @@ public class ScriptBody {
     }
 
     // TODO: 01.08.2019 Вынести особую логику в тело скрипта, а в сервисах оставить лишь универсальную для любого скрипта 
-    // TODO: 07.08.2019 Проверка и переименование перед перемещением
-    // TODO: 07.08.2019 PROP to JSON
 }

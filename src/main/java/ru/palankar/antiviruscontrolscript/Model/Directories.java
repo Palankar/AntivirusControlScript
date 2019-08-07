@@ -12,6 +12,8 @@ public class Directories {
     private String firstDirectory;
     private String secondDirectory;
     private String thirdDirectory;
+    private String errorsDirectory;
+
 
     private Directories() { }
 
@@ -44,5 +46,13 @@ public class Directories {
 
     public void setThirdDirectory(String thirdDirectory) {
         this.thirdDirectory = thirdDirectory;
+    }
+    
+    public Path getErrorsDirectory() {
+        return Paths.get(errorsDirectory);
+    }
+
+    public void setErrorsDirectory(String errorsDirectory) {
+        this.errorsDirectory = errorsDirectory;
     }
 }

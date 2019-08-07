@@ -1,5 +1,6 @@
 {
   "FirstDirectory" : "D:\\A-repository (reserve)",
   "SecondDirectory"   : "C:\\B-repository",
-  "ThirdDirectory"   : "C:\\Users\\palan\\Desktop\\C-repository"
+  "ThirdDirectory"   : "C:\\Users\\palan\\Desktop\\C-repository",
+  "ErrorsDirectory"   : "C:\\B-repository\\Errors"
 }

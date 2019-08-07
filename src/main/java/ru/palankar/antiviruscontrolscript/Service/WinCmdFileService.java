@@ -24,7 +24,7 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
     private JSONService jsonService = new JSONServiceImpl();
     private DirectoryService dirService = new DirectoryServiceImpl();
     // TODO: 31.07.2019 Переделать хардкод, когда дадут вызов антивируса
-    private static final String KAVResult = "0";    //Что вернет антивирь
+    private static String KAVResult = "0";    //Что вернет антивирь
 
 
     public WinCmdFileService(Path directory) {
@@ -43,14 +43,21 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
 
         List<File> movedFiles = new ArrayList<>();
         for (File file : files) {
-            File renamed = renameFile(file, FilenameUtils.getName(file.getName()) + ".part");
+            File renamed = renameFile(file, FilenameUtils.getName(file.getName()) + ".part", true);
             logger.info("Moving " + renamed.getName() + "...");
 
-            runCmd("move \"" + renamed.getPath() + "\" \"" + into.toString() + "\"");
+            //проверяет наличие схожего по имени файла в директории передачи, переименовывает для корректной замены
+            for (File fileIn : into.toFile().listFiles()) {
+                if (fileIn.getName().equals(file.getName())) {
+                    renameFile(fileIn, FilenameUtils.getName(fileIn.getName()) + ".part", false);
+                }
+            }
+
+            runCmd("move /Y \"" + renamed.getPath() + "\" \"" + into.toString() + "\"");
 
             File movedStart = new File(into.toString() + "\\" + FilenameUtils.getName(renamed.getName()));
             updateFiles(renamed, movedStart);
-            File movedFinal = renameFile(movedStart, FilenameUtils.getBaseName(renamed.getName()));
+            File movedFinal = renameFile(movedStart, FilenameUtils.getBaseName(renamed.getName()), true);
             movedFiles.add(movedFinal);
         }
 
@@ -70,14 +77,21 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
     public void moveFile(File file, Path from, Path into) {
         logger.info("Moving file from " + from.toString() + " to " + into.toString());
 
-            File renamed = renameFile(file, FilenameUtils.getName(file.getName()) + ".part");
-            logger.info("Moving " + renamed.getName() + "...");
+        File renamed = renameFile(file, FilenameUtils.getName(file.getName()) + ".part", true);
+        logger.info("Moving " + renamed.getName() + "...");
 
-            runCmd("move \"" + renamed.getPath() + "\" \"" + into.toString() + "\"");
+        //проверяет наличие схожего по имени файла в директории передачи, переименовывает для корректной замены
+        for (File fileIn : into.toFile().listFiles()) {
+            if (fileIn.getName().equals(file.getName())) {
+                renameFile(fileIn, FilenameUtils.getName(fileIn.getName()) + ".part", false);
+            }
+        }
 
-            File movedStart = new File(into.toString() + "\\" + FilenameUtils.getName(renamed.getName()));
-            updateFiles(renamed, movedStart);
-            File movedFinal = renameFile(movedStart, FilenameUtils.getBaseName(renamed.getName()));
+        runCmd("move /Y \"" + renamed.getPath() + "\" \"" + into.toString() + "\"");
+
+        File movedStart = new File(into.toString() + "\\" + FilenameUtils.getName(renamed.getName()));
+        updateFiles(renamed, movedStart);
+        File movedFinal = renameFile(movedStart, FilenameUtils.getBaseName(renamed.getName()), true);
 
         if (movedFinal.exists())
             logger.info("Moving files complete");
@@ -95,13 +109,13 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
     @Override
     public void saveFile(File file, Path into) {
         logger.info("Start saving " + file.getName() + " to " + into.toString());
-        File renamed = renameFile(file, FilenameUtils.getName(file.getName()) + ".part");
+        File renamed = renameFile(file, FilenameUtils.getName(file.getName()) + ".part", true);
         logger.info("Coping " + renamed.getPath() + " to " + into.toString() + "...");
 
         runCmd("copy \"" + renamed.getPath() + "\" \"" + into.toString() + "\"");
 
         File savedStart = new File(into.toString() + "\\" + FilenameUtils.getName(renamed.getName()));
-        File savedFinal = renameFile(savedStart, FilenameUtils.getBaseName(renamed.getName()));
+        File savedFinal = renameFile(savedStart, FilenameUtils.getBaseName(renamed.getName()), true);
         if (savedFinal.exists())
             logger.info("Saving correct");
         else
@@ -115,13 +129,14 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
      * @return  создает File с новым именем по пути старого и возвращает его
      */
     @Override
-    public File renameFile(File file, String newName) {
+    public File renameFile(File file, String newName, boolean toUpdate) {
         runCmd("rename \"" + file.getPath() + "\" " + newName);
 
         File renamed = new File(FilenameUtils.getFullPath(file.getPath()) + newName);
 
         if (renamed.exists()) {
-            updateFiles(file, renamed);
+            if (toUpdate)
+                updateFiles(file, renamed);
         } else {
             logger.error("FILE " + renamed.getName() + " DOES NOT EXISTS");
             return null;
@@ -160,14 +175,21 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
     @Override
     public boolean checkByAntivirus(Map<String, File> files) {
         logger.info("Anti-virus scanning...");
+        List<File> virusFiles = new ArrayList<>();
 
         for (File file : files.values()) {
-            File renamed = renameFile(file, file.getName() + ".checking");
+            File renamed = renameFile(file, file.getName() + ".checking", true);
             logger.info("Scanning " + renamed);
 
+            //для проверки
+            if (file.getName().contains("was"))
+                KAVResult = "1";
+            else
+                KAVResult = "0";
 
             if(!KAVResult.equals("0")) {
                 logger.warn("VIRUS DETECTED IN FILE " + file);
+                virusFiles.add(file);
 
                 //Ищет json к файлу. попробовать вынести в отдельный метод?
                 File jsonToFile = null;
@@ -179,7 +201,7 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
                 jsonService.putParam(jsonToFile, "AntivirusScanResult", KAVResult);
 
                 File errorsDir;
-                if (!(errorsDir = new File(dirService.getSecondDirectory().toString() + "\\Errors")).exists()) {
+                if (!(errorsDir = dirService.getErrorsDirectory().toFile()).exists()) {
                     if (!errorsDir.mkdir())
                         logger.error("Failed to create directory " + errorsDir.getName());
                     moveFile(jsonToFile, dirService.getFirstDirectory(), errorsDir.toPath());
@@ -187,12 +209,17 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
                     moveFile(jsonToFile, dirService.getFirstDirectory(), errorsDir.toPath());
                 }
 
-                renameFile(renamed, FilenameUtils.removeExtension(renamed.getName()));
+                renameFile(renamed, FilenameUtils.removeExtension(renamed.getName()), true);
             } else {
-                renameFile(renamed, FilenameUtils.removeExtension(renamed.getName()));
+                renameFile(renamed, FilenameUtils.removeExtension(renamed.getName()), true);
             }
 
         }
+
+        for (File virusFile : virusFiles) {
+            deleteFile(virusFile);
+        }
+
         logger.info("Scanning complete");
 
         return !KAVResult.equals("0");
@@ -207,6 +234,25 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
         logger.info("Deleting " + file.getName());
 
         runCmd("del \"" + file.getPath() + "\"");
+
+        for (String key : jsonToUserFileMap.getMap().keySet()) {
+            if (key.contains(FilenameUtils.getBaseName(file.getName()))) {
+                jsonToUserFileMap.getMap().remove(key);
+                break;
+            }
+        }
+        for (File userFile : userFilesList.getList()) {
+            if (userFile.equals(file)) {
+                userFilesList.getList().remove(userFile);
+                break;
+            }
+        }
+        for (File json : jsonList.getList()) {
+            if (json.getName().contains(FilenameUtils.getBaseName(file.getName()))) {
+                jsonList.getList().remove(json);
+                break;
+            }
+        }
 
         logger.info("File " + file.getName() + " deleted");
     }

@@ -47,4 +47,16 @@ public interface DirectoryService {
      * @param   thirdDirectory  путь финальной директории
      */
     void setThirdDirectory(String thirdDirectory);
+
+    /**
+     * Получить путь директории с ошибками
+     * @return  директория с ошибками в формате Path
+     */
+    Path getErrorsDirectory();
+
+    /**
+     * Задать путь директории с ошибками
+     * @param   secondDirectory путь директории с ошибками
+     */
+    void setErrorsDirectory(String secondDirectory);
 }

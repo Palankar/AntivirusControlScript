@@ -42,6 +42,8 @@ public class DirectoryServiceImpl implements DirectoryService {
             logger.info("Direction property " + dirJSON.get("SecondDirectory").toString() + " initialised");
             setThirdDirectory(dirJSON.get("ThirdDirectory").toString());
             logger.info("Direction property " + dirJSON.get("ThirdDirectory").toString() + " initialised");
+            setErrorsDirectory(dirJSON.get("ErrorsDirectory").toString());
+            logger.info("Direction property " + dirJSON.get("ErrorsDirectory").toString() + " initialised");
         } catch (Exception e) {
             logger.error("PROPERTY FILE directories.json COULD NOT FOUND");
             System.exit(0);
@@ -78,5 +80,15 @@ public class DirectoryServiceImpl implements DirectoryService {
     @Override
     public void setThirdDirectory(String thirdDirectory) {
         directories.setThirdDirectory(thirdDirectory);
+    }
+
+    @Override
+    public Path getErrorsDirectory() {
+        return directories.getErrorsDirectory();
+    }
+
+    @Override
+    public void setErrorsDirectory(String errorsDirectory) {
+        directories.setErrorsDirectory(errorsDirectory);
     }
 }

@@ -6,7 +6,7 @@
 
     <groupId>ru.palankar</groupId>
     <artifactId>antivirus-control-script</artifactId>
-    <version>1.7</version>
+    <version>1.8</version>
 
     <build>
         <plugins>
