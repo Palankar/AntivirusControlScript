@@ -1,6 +1,7 @@
 {
-  "FirstDirectory" : "D:\\A-repository (reserve)",
-  "SecondDirectory"   : "C:\\B-repository",
-  "ThirdDirectory"   : "C:\\Users\\palan\\Desktop\\C-repository",
-  "ErrorsDirectory"   : "C:\\B-repository\\Errors"
+  "FirstDirectory"  : "D:\\A-repository (reserve)",
+  "SecondDirectory" : "C:\\B-repository",
+  "ThirdDirectory"  : "C:\\Users\\palan\\Desktop\\C-repository",
+  "ErrorsDirectory" : "C:\\B-repository\\Errors",
+  "KAVSHELL"        : "C:\\Program Files (x86)\\Kaspersky Lab\\Kaspersky Security for Windows Server\\kavshell.exe"
 }

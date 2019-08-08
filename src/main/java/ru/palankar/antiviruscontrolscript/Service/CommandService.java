@@ -5,7 +5,7 @@ public interface CommandService {
     /**
      * Запускает команду через Runtime
      * @param   command     команда для запуска
+     * @return  код возврата команды
      */
-    void runCmd(String command);
-    // TODO: 30.07.2019 Если потом понадобится - можно добавить поле выбора ОС и команды по Linux
+    int runCmd(String command);
 }

@@ -22,9 +22,6 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
     private JSONList jsonList = JSONList.getInstance();
     private JSONService jsonService = new JSONServiceImpl();
     private DirectoryService dirService = new DirectoryServiceImpl();
-    // TODO: 31.07.2019 Переделать хардкод, когда дадут вызов антивируса
-    private static String KAVResult = "0";    //Что вернет антивирь
-
 
     public WinCmdFileService(Path directory) {
         fillArray(directory);
@@ -167,10 +164,9 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
     /**
      * Проверка антивирусом. Пока что чисто фиктивная
      * @param   files   коллекция, содержащая файлы на проверку антивирусом
-     * @return  <code>true</code> при нахождении вируса, иначе <code>false</code>
      */
     @Override
-    public boolean checkByAntivirus(Map<String, File> files) {
+    public void checkByAntivirus(Map<String, File> files) {
         logger.info("Anti-virus scanning...");
         List<File> virusFiles = new ArrayList<>();
 
@@ -178,24 +174,22 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
             File renamed = renameFile(file, file.getName() + ".checking", true);
             logger.info("Scanning " + renamed);
 
-            //для проверки
-            if (file.getName().contains("was"))
-                KAVResult = "1";
-            else
-                KAVResult = "0";
+            //сама команда удаляющая зараженные файлы + возврат антивиря
+            int KAVResult = runCmd("\"" + dirService.getKavshellDirectory().toString()
+                    + "\" scan /AI:DELETE /AS:DELETE \"" + renamed.getName() + "\"");
 
-            if(!KAVResult.equals("0")) {
+            if(KAVResult == -80 || KAVResult == -81) {
                 logger.warn("VIRUS DETECTED IN FILE " + file);
                 virusFiles.add(file);
 
-                //Ищет json к файлу. попробовать вынести в отдельный метод?
+                //Ищет json к файлу, попробовать вынести в отдельный метод?
                 File jsonToFile = null;
                 for (File json : jsonList.getList()) {
                     if (json.getName().contains(FilenameUtils.getBaseName(file.getName())))
                         jsonToFile = json;
                 }
 
-                jsonService.putParam(jsonToFile, "AntivirusScanResult", KAVResult);
+                jsonService.putParam(jsonToFile, "AntivirusScanResult", String.valueOf(KAVResult));
 
                 File errorsDir;
                 if (!(errorsDir = dirService.getErrorsDirectory().toFile()).exists()) {
@@ -207,19 +201,39 @@ public class WinCmdFileService extends CommandServiceImpl implements FileService
                 }
 
                 renameFile(renamed, FilenameUtils.removeExtension(renamed.getName()), true);
+            } else if (KAVResult == 0){
+                renameFile(renamed, FilenameUtils.removeExtension(renamed.getName()), true);
             } else {
                 renameFile(renamed, FilenameUtils.removeExtension(renamed.getName()), true);
+                logger.warn("kavshell scan error, return code: " + KAVResult);
+            }
+        }
+
+        //удаляет с коллекций файлы, удаленные антивирусом
+        for (File virusFile : virusFiles) {
+
+            for (String key : jsonToUserFileMap.getMap().keySet()) {
+                if (key.contains(FilenameUtils.getBaseName(virusFile.getName()))) {
+                    jsonToUserFileMap.getMap().remove(key);
+                    break;
+                }
+            }
+            for (File userFile : userFilesList.getList()) {
+                if (userFile.equals(virusFile)) {
+                    userFilesList.getList().remove(userFile);
+                    break;
+                }
+            }
+            for (File json : jsonList.getList()) {
+                if (json.getName().contains(FilenameUtils.getBaseName(virusFile.getName()))) {
+                    jsonList.getList().remove(json);
+                    break;
+                }
             }
 
         }
 
-        for (File virusFile : virusFiles) {
-            deleteFile(virusFile);
-        }
-
         logger.info("Scanning complete");
-
-        return !KAVResult.equals("0");
     }
 
     /**

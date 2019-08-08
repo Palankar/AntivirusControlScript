@@ -11,18 +11,21 @@ public class CommandServiceImpl implements CommandService {
     /**
      * Запускает команду под Windows
      * @param   command     команда для запуска
+     * @return  код возврата команды
      */
     @Override
-    public void runCmd(String command) {
+    public int runCmd(String command) {
         String winCmd = "cmd /c " + command;
 
+        int endInt = 0;
         try {
             Runtime rnt = Runtime.getRuntime();
             Process proc = rnt.exec(winCmd);
-            proc.waitFor();
+            //код возврата команды
+            endInt = proc.waitFor();
         } catch (IOException | InterruptedException e) {
             logger.error("Error starting command: " + winCmd);
         }
-
+        return endInt;
     }
 }

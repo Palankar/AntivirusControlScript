@@ -59,4 +59,16 @@ public interface DirectoryService {
      * @param   secondDirectory путь директории с ошибками
      */
     void setErrorsDirectory(String secondDirectory);
+
+    /**
+     * Получить путь директории с kavshell
+     * @return  директория с ошибками в формате Path
+     */
+    Path getKavshellDirectory();
+
+    /**
+     * Задать путь директории с kavshell
+     * @param   kavshell путь директории с kavshell
+     */
+    void setKavshellDirectory(String kavshell);
 }

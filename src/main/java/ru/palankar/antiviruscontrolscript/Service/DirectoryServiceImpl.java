@@ -44,6 +44,8 @@ public class DirectoryServiceImpl implements DirectoryService {
             logger.info("Direction property " + dirJSON.get("ThirdDirectory").toString() + " initialised");
             setErrorsDirectory(dirJSON.get("ErrorsDirectory").toString());
             logger.info("Direction property " + dirJSON.get("ErrorsDirectory").toString() + " initialised");
+            setKavshellDirectory(dirJSON.get("KAVSHELL").toString());
+            logger.info("Direction property " + dirJSON.get("KAVSHELL").toString() + " initialised");
         } catch (Exception e) {
             logger.error("PROPERTY FILE directories.json COULD NOT FOUND");
             System.exit(0);
@@ -90,5 +92,15 @@ public class DirectoryServiceImpl implements DirectoryService {
     @Override
     public void setErrorsDirectory(String errorsDirectory) {
         directories.setErrorsDirectory(errorsDirectory);
+    }
+
+    @Override
+    public Path getKavshellDirectory() {
+        return directories.getKavshellDirectory();
+    }
+
+    @Override
+    public void setKavshellDirectory(String kavshell) {
+        directories.setKavshellDirectory(kavshell);
     }
 }

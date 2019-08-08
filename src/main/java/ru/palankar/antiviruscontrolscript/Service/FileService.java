@@ -48,9 +48,8 @@ public interface FileService {
     /**
      * Антивирусная проверка файлов
      * @param   files   коллекция, содержащая файлы на проверку антивирусом
-     * @return  <code>true</code> при нахождении вируса, иначе <code>false</code>
      */
-    boolean checkByAntivirus(Map<String, File> files);
+    void checkByAntivirus(Map<String, File> files);
 
     /**
      * Удаляет пекреданный в качестве аргумента файл

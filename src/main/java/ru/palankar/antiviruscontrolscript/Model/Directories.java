@@ -13,6 +13,7 @@ public class Directories {
     private String secondDirectory;
     private String thirdDirectory;
     private String errorsDirectory;
+    private String kavshell;
 
 
     private Directories() { }
@@ -54,5 +55,13 @@ public class Directories {
 
     public void setErrorsDirectory(String errorsDirectory) {
         this.errorsDirectory = errorsDirectory;
+    }
+
+    public Path getKavshellDirectory() {
+        return Paths.get(kavshell);
+    }
+
+    public void setKavshellDirectory(String kavshell) {
+        this.kavshell = kavshell;
     }
 }
